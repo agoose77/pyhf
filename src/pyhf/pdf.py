@@ -565,7 +565,13 @@ class Model:
         # build up our representation of the specification
         self.config = _ModelConfig(spec, **config_kwargs)
 
-        mega_mods, _nominal_rates = _nominal_and_modifiers_from_spec(self.config, spec)
+        mega_mods, _nominal_rates = _nominal_and_modifiers_from_spec(
+            self.config, self.spec
+        )
+
+        for custom in custom_modifiers:
+            custom.config = self.config
+
         self.main_model = _MainModel(
             self.config,
             mega_mods=mega_mods,

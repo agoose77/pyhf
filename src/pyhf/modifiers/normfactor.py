@@ -6,27 +6,54 @@ from ..parameters import unconstrained, ParamViewer
 
 log = logging.getLogger(__name__)
 
-
-@modifier(name='normfactor', op_code='multiplication')
-class normfactor:
-    @classmethod
-    def required_parset(cls, sample_data, modifier_data):
-        return {
-            'paramset_type': unconstrained,
-            'n_parameters': 1,
-            'is_constrained': cls.is_constrained,
-            'is_shared': True,
-            'inits': (1.0,),
-            'bounds': ((0, 10),),
-            'fixed': False,
-        }
+def required_parset(sample_data, modifier_data):
+    return {
+        'paramset_type': unconstrained,
+        'n_parameters': 1,
+        'is_shared': True,
+        'inits': (1.0,),
+        'bounds': ((0, 10),),
+        'fixed': False,
+    }
 
 
+class normfactor_builder:
+    def __init__(self, config):
+        self._mega_mods = {}
+        self.config = config
+        self.required_parsets = {}
+
+    def collect(self, thismod, nom):
+        maskval = True if thismod else False
+        mask = [maskval] * len(nom)
+        return {'mask': mask}
+
+    def append(self, key, channel, sample, thismod, defined_samp):
+        self._mega_mods.setdefault(key, {}).setdefault(sample, {}).setdefault(
+            'data', {'mask': []}
+        )
+        nom = (
+            defined_samp['data']
+            if defined_samp
+            else [0.0] * self.config.channel_nbins[channel]
+        )
+        moddata = self.collect(thismod, nom)
+        self._mega_mods[key][sample]['data']['mask'] += moddata['mask']
+        if thismod:
+            self.required_parsets.setdefault(thismod['name'], []).append(
+                required_parset(
+                    defined_samp['data'], thismod['data']
+                )
+            )
+
+    def finalize(self):
+        return self._mega_mods
+        
 class normfactor_combined:
-    def __init__(self, modifiers, pdfconfig, mega_mods, batch_size=None):
+    def __init__(self, modifiers, pdfconfig, builder_data, batch_size=None):
         self.batch_size = batch_size
-        self.name = normfactor.name
-        self.op_code = normfactor.op_code
+        self.name = 'normfactor'
+        self.op_code = 'multiplication'
 
         keys = [f'{mtype}/{m}' for m, mtype in modifiers]
         normfactor_mods = [m for m, _ in modifiers]
@@ -41,7 +68,7 @@ class normfactor_combined:
         )
 
         self._normfactor_mask = [
-            [[mega_mods[m][s]['data']['mask']] for s in pdfconfig.samples] for m in keys
+            [[builder_data[m][s]['data']['mask']] for s in pdfconfig.samples] for m in keys
         ]
         self._precompute()
         events.subscribe('tensorlib_changed')(self._precompute)

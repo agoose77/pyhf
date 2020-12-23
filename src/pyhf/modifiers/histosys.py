@@ -7,29 +7,61 @@ from ..parameters import constrained_by_normal, ParamViewer
 
 log = logging.getLogger(__name__)
 
+def required_parset(sample_data, modifier_data):
+    return {
+        'paramset_type': constrained_by_normal,
+        'n_parameters': 1,
+        'is_shared': True,
+        'inits': (0.0,),
+        'bounds': ((-5.0, 5.0),),
+        'fixed': False,
+        'auxdata': (0.0,),
+    }
 
-@modifier(name='histosys', constrained=True, op_code='addition')
-class histosys:
-    @classmethod
-    def required_parset(cls, sample_data, modifier_data):
-        return {
-            'paramset_type': constrained_by_normal,
-            'n_parameters': 1,
-            'is_constrained': cls.is_constrained,
-            'is_shared': True,
-            'inits': (0.0,),
-            'bounds': ((-5.0, 5.0),),
-            'fixed': False,
-            'auxdata': (0.0,),
-        }
+class histosys_builder:
+    def __init__(self, config):
+        self._mega_mods = {}
+        self.config = config
+        self.required_parsets = {}
 
+    def collect(self, thismod, nom):
+        lo_data = thismod['data']['lo_data'] if thismod else nom
+        hi_data = thismod['data']['hi_data'] if thismod else nom
+        maskval = True if thismod else False
+        mask = [maskval] * len(nom)
+        return {'lo_data': lo_data, 'hi_data': hi_data, 'mask': mask, 'nom_data': nom}
+
+    def append(self, key, channel, sample, thismod, defined_samp):
+        self._mega_mods.setdefault(key, {}).setdefault(sample, {}).setdefault(
+            'data', {'hi_data': [], 'lo_data': [], 'nom_data': [], 'mask': []}
+        )
+        nom = (
+            defined_samp['data']
+            if defined_samp
+            else [0.0] * self.config.channel_nbins[channel]
+        )
+        moddata = self.collect(thismod, nom)
+        self._mega_mods[key][sample]['data']['lo_data'] += moddata['lo_data']
+        self._mega_mods[key][sample]['data']['hi_data'] += moddata['hi_data']
+        self._mega_mods[key][sample]['data']['nom_data'] += moddata['nom_data']
+        self._mega_mods[key][sample]['data']['mask'] += moddata['mask']
+
+        if thismod:
+            self.required_parsets.setdefault(thismod['name'], []).append(
+                required_parset(
+                    defined_samp['data'], thismod['data']
+                )
+            )
+
+    def finalize(self):
+        return self._mega_mods
 
 class histosys_combined:
     def __init__(
-        self, modifiers, pdfconfig, mega_mods, interpcode='code0', batch_size=None
+        self, modifiers, pdfconfig, builder_data, interpcode='code0', batch_size=None
     ):
-        self.name = histosys.name
-        self.op_code = histosys.op_code
+        self.name = 'histosys'
+        self.op_code = 'addition'
         self.batch_size = batch_size
         self.interpcode = interpcode
         assert self.interpcode in ['code0', 'code2', 'code4p']
@@ -49,16 +81,16 @@ class histosys_combined:
         self._histosys_histoset = [
             [
                 [
-                    mega_mods[m][s]['data']['lo_data'],
-                    mega_mods[m][s]['data']['nom_data'],
-                    mega_mods[m][s]['data']['hi_data'],
+                    builder_data[m][s]['data']['lo_data'],
+                    builder_data[m][s]['data']['nom_data'],
+                    builder_data[m][s]['data']['hi_data'],
                 ]
                 for s in pdfconfig.samples
             ]
             for m in keys
         ]
         self._histosys_mask = [
-            [[mega_mods[m][s]['data']['mask']] for s in pdfconfig.samples] for m in keys
+            [[builder_data[m][s]['data']['mask']] for s in pdfconfig.samples] for m in keys
         ]
 
         if histosys_mods:

@@ -36,7 +36,7 @@ def add_to_registry(
     if cls_name in registry:
         raise KeyError(f'The modifier name "{cls_name:s}" is already taken.')
     # validate the structure
-    validate_modifier_structure(cls)
+    # validate_modifier_structure(cls)
     # set is_constrained
     cls.is_constrained = constrained
     if constrained:
@@ -165,48 +165,20 @@ def modifier(*args, **kwargs):
         )
 
 
-from .histosys import histosys, histosys_combined
-from .lumi import lumi, lumi_combined
-from .normfactor import normfactor, normfactor_combined
-from .normsys import normsys, normsys_combined
-from .shapefactor import shapefactor, shapefactor_combined
-from .shapesys import shapesys, shapesys_combined
-from .staterror import staterror, staterror_combined
+from .histosys import histosys_builder, histosys_combined
+from .lumi import lumi_builder, lumi_combined
+from .normfactor import normfactor_builder, normfactor_combined
+from .shapefactor import shapefactor_builder, shapefactor_combined
+from .normsys import normsys_builder, normsys_combined
+from .shapesys import shapesys_builder, shapesys_combined
+from .staterror import staterr_builder, staterror_combined
 
-uncombined = {
-    'histosys': histosys,
-    'lumi': lumi,
-    'normfactor': normfactor,
-    'normsys': normsys,
-    'shapefactor': shapefactor,
-    'shapesys': shapesys,
-    'staterror': staterror,
+pyhfset = {
+    'histosys': (histosys_builder,histosys_combined),
+    'lumi': (lumi_builder, lumi_combined),
+    'normfactor': (normfactor_builder, normfactor_combined),
+    'normsys': (normsys_builder, normsys_combined),
+    'shapefactor': (shapefactor_builder, shapefactor_combined),
+    'shapesys': (shapesys_builder, shapesys_combined),
+    'staterror': (staterr_builder, staterror_combined),
 }
-
-combined = {
-    'histosys': histosys_combined,
-    'lumi': lumi_combined,
-    'normfactor': normfactor_combined,
-    'normsys': normsys_combined,
-    'shapefactor': shapefactor_combined,
-    'shapesys': shapesys_combined,
-    'staterror': staterror_combined,
-}
-
-__all__ = [
-    'histosys',
-    'histosys_combined',
-    'lumi',
-    'lumi_combined',
-    'normfactor',
-    'normfactor_combined',
-    'normsys',
-    'normsys_combined',
-    'shapefactor',
-    'shapefactor_combined',
-    'shapesys',
-    'shapesys_combined',
-    'staterror',
-    'staterror_combined',
-    'combined',
-]

@@ -850,7 +850,11 @@ def test_model_integration_fixed_parameters_shapesys():
     assert len(model.config.suggested_fixed()) == 5
     assert model.config.suggested_fixed() == [False, True, True, True, False]
     assert model.config.poi_index == 4
-    assert model.config.suggested_fixed()[model.config.par_slice('uncorr')] == [True, True, True]
+    assert model.config.suggested_fixed()[model.config.par_slice('uncorr')] == [
+        True,
+        True,
+        True,
+    ]
 
 
 def test_reproducible_model_spec():

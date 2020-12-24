@@ -17,8 +17,8 @@ from .modifiers import pyhfset
 
 log = logging.getLogger(__name__)
 
+
 def _finalize_parameters(user_parameters, _paramsets_requirements, channel_nbins):
-    print('finalizing!! LUKAS',user_parameters)
     # build up a dictionary of the parameter configurations provided by the user
     _paramsets_user_configs = {}
     for parameter in user_parameters:
@@ -34,7 +34,6 @@ def _finalize_parameters(user_parameters, _paramsets_requirements, channel_nbins
 
     _sets = {}
     for param_name, paramset_requirements in _reqs.items():
-        print('param_name',param_name,paramset_requirements)
         paramset_type = paramset_requirements.get('paramset_type')
         paramset = paramset_type(**paramset_requirements)
         _sets[param_name] = paramset
@@ -72,22 +71,6 @@ class nominal_builder:
         return _nominal_rates
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def _nominal_and_modifiers_from_spec(modifier_set, config, spec, batch_size):
     # the mega-channel will consist of mega-samples that subscribe to
     # mega-modifiers. i.e. while in normal histfactory, each sample might
@@ -106,9 +89,6 @@ def _nominal_and_modifiers_from_spec(modifier_set, config, spec, batch_size):
         for s in c['samples']:
             moddict = {f"{x['type']}/{x['name']}": x for x in s['modifiers']}
             helper.setdefault(c['name'], {})[s['name']] = (s, moddict)
-
-
-
 
     modifiers_builders = {}
     for k, (builder, applier) in modifier_set.items():
@@ -147,7 +127,6 @@ def _nominal_and_modifiers_from_spec(modifier_set, config, spec, batch_size):
     )
 
     config.set_parameters(_required_paramsets)
-
 
     the_modifiers = {}
 
@@ -237,7 +216,6 @@ class _ModelConfig(_ChannelSummaryMixin):
         fixed = []
         for name in self.par_order:
             paramset = self.par_map[name]['paramset']
-            print(name,paramset.suggested_fixed,'>??',paramset.n_parameters)
             fixed = fixed + [paramset.suggested_fixed] * paramset.n_parameters
         return fixed
 

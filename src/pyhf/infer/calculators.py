@@ -477,7 +477,9 @@ class EmpiricalDistribution:
         return (
             tensorlib.sum(
                 tensorlib.where(
-                    self.samples >= value, tensorlib.astensor(1), tensorlib.astensor(0)
+                    self.samples >= value,
+                    tensorlib.astensor(1.0),
+                    tensorlib.astensor(0.0),
                 )
             )
             / tensorlib.shape(self.samples)[0]

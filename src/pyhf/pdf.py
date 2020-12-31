@@ -45,18 +45,20 @@ class _nominal_builder:
         self.mega_samples = {}
         self.config = config
 
-    def append(self, c, s, defined_samp):
-        self.mega_samples.setdefault(s, {'name': f'mega_{s}', 'nom': []})
+    def append(self, channel, sample, defined_samp):
+        self.mega_samples.setdefault(sample, {'name': f'mega_{sample}', 'nom': []})
         nom = (
             defined_samp['data']
             if defined_samp
-            else [0.0] * self.config.channel_nbins[c]
+            else [0.0] * self.config.channel_nbins[channel]
         )
-        self.mega_samples[s]['nom'] += nom
+        if not len(nom) == self.config.channel_nbins[channel]:
+            raise exceptions.InvalidModel(f'expected {self.config.channel_nbins[channel]} size sample data but got {len(nom)}')
+        self.mega_samples[sample]['nom'] += nom
 
     def apply(self):
         nominal_rates = default_backend.astensor(
-            [self.mega_samples[s]['nom'] for s in self.config.samples]
+            [self.mega_samples[sample]['nom'] for sample in self.config.samples]
         )
         _nominal_rates = default_backend.reshape(
             nominal_rates,
@@ -86,7 +88,11 @@ def _nominal_and_modifiers_from_spec(modifier_set, config, spec, batch_size):
     helper = {}
     for c in spec['channels']:
         for s in c['samples']:
-            moddict = {f"{x['type']}/{x['name']}": x for x in s['modifiers']}
+            moddict = {}
+            for x in s['modifiers']:
+                if x['type'] not in modifier_set:
+                    raise exceptions.InvalidModifier
+                moddict[f"{x['type']}/{x['name']}"] = x
             helper.setdefault(c['name'], {})[s['name']] = (s, moddict)
 
     modifiers_builders = {}
@@ -159,10 +165,10 @@ class _ModelConfig(_ChannelSummaryMixin):
             'modifier_settings', default_modifier_settings
         )
 
-        # if config_kwargs:
-        #     raise exceptions.Unsupported(
-        #         f"Unsupported options were passed in: {list(config_kwargs.keys())}."
-        #     )
+        if config_kwargs:
+            raise exceptions.Unsupported(
+                f"Unsupported options were passed in: {list(config_kwargs.keys())}."
+            )
 
         self.par_map = {}
         self.par_order = []
@@ -485,13 +491,13 @@ class Model:
         if validate:
             utils.validate(self.spec, self.schema, version=self.version)
         # build up our representation of the specification
+        poi_name = config_kwargs.pop('poi_name', 'mu')
         self.config = _ModelConfig(self.spec, **config_kwargs)
 
         modifiers, _nominal_rates = _nominal_and_modifiers_from_spec(
             modifier_set, self.config, self.spec, self.batch_size
         )
 
-        poi_name = config_kwargs.pop('poi_name', 'mu')
         if poi_name is not None:
             self.config.set_poi(poi_name)
 

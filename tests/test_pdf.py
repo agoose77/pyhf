@@ -535,29 +535,29 @@ def test_pdf_integration_shapesys(backend):
     ]
 
 
-# def test_invalid_modifier():
-#     spec = {
-#         'channels': [
-#             {
-#                 'name': 'channel',
-#                 'samples': [
-#                     {
-#                         'name': 'ttbar',
-#                         'data': [1],
-#                         'modifiers': [
-#                             {
-#                                 'name': 'a_name',
-#                                 'type': 'this_should_not_exist',
-#                                 'data': [1],
-#                             }
-#                         ],
-#                     }
-#                 ],
-#             }
-#         ]
-#     }
-#     with pytest.raises(pyhf.exceptions.InvalidModifier):
-#         pyhf.pdf._ModelConfig(spec)
+def test_invalid_modifier():
+    spec = {
+        'channels': [
+            {
+                'name': 'channel',
+                'samples': [
+                    {
+                        'name': 'ttbar',
+                        'data': [1],
+                        'modifiers': [
+                            {
+                                'name': 'a_name',
+                                'type': 'this_should_not_exist',
+                                'data': [1],
+                            }
+                        ],
+                    }
+                ],
+            }
+        ]
+    }
+    with pytest.raises(pyhf.exceptions.InvalidModifier):
+        pyhf.pdf.Model(spec, validate=False)  # don't validate to delay exception
 
 
 def test_invalid_modifier_name_resuse():
@@ -732,63 +732,63 @@ def test_lumi_np_scaling():
     ]
 
 
-# def test_sample_wrong_bins():
-#     spec = {
-#         'channels': [
-#             {
-#                 'name': 'channel',
-#                 'samples': [
-#                     {'name': 'goodsample', 'data': [1.0, 2.0], 'modifiers': []},
-#                     {'name': 'badsample', 'data': [3.0, 4.0, 5.0], 'modifiers': []},
-#                 ],
-#             }
-#         ]
-#     }
-#     with pytest.raises(pyhf.exceptions.InvalidModel):
-#         pyhf.Model(spec)
+def test_sample_wrong_bins():
+    spec = {
+        'channels': [
+            {
+                'name': 'channel',
+                'samples': [
+                    {'name': 'goodsample', 'data': [1.0, 2.0], 'modifiers': []},
+                    {'name': 'badsample', 'data': [3.0, 4.0, 5.0], 'modifiers': []},
+                ],
+            }
+        ]
+    }
+    with pytest.raises(pyhf.exceptions.InvalidModel):
+        pyhf.Model(spec)
 
 
-# @pytest.mark.parametrize(
-#     'measurements, msettings',
-#     [
-#         (
-#             None,
-#             {'normsys': {'interpcode': 'code4'}, 'histosys': {'interpcode': 'code4p'}},
-#         )
-#     ],
-# )
-# def test_unexpected_keyword_argument(measurements, msettings):
-#     spec = {
-#         "channels": [
-#             {
-#                 "name": "singlechannel",
-#                 "samples": [
-#                     {
-#                         "name": "signal",
-#                         "data": [5.0, 10.0],
-#                         "modifiers": [
-#                             {"name": "mu", "type": "normfactor", "data": None}
-#                         ],
-#                     },
-#                     {
-#                         "name": "background",
-#                         "data": [50.0, 60.0],
-#                         "modifiers": [
-#                             {
-#                                 "name": "uncorr_bkguncrt",
-#                                 "type": "shapesys",
-#                                 "data": [5.0, 12.0],
-#                             }
-#                         ],
-#                     },
-#                 ],
-#             }
-#         ]
-#     }
-#     with pytest.raises(pyhf.exceptions.Unsupported):
-#         pyhf.pdf._ModelConfig(
-#             spec, measurement_name=measurements, modifiers_settings=msettings
-#         )
+@pytest.mark.parametrize(
+    'measurements, msettings',
+    [
+        (
+            None,
+            {'normsys': {'interpcode': 'code4'}, 'histosys': {'interpcode': 'code4p'}},
+        )
+    ],
+)
+def test_unexpected_keyword_argument(measurements, msettings):
+    spec = {
+        "channels": [
+            {
+                "name": "singlechannel",
+                "samples": [
+                    {
+                        "name": "signal",
+                        "data": [5.0, 10.0],
+                        "modifiers": [
+                            {"name": "mu", "type": "normfactor", "data": None}
+                        ],
+                    },
+                    {
+                        "name": "background",
+                        "data": [50.0, 60.0],
+                        "modifiers": [
+                            {
+                                "name": "uncorr_bkguncrt",
+                                "type": "shapesys",
+                                "data": [5.0, 12.0],
+                            }
+                        ],
+                    },
+                ],
+            }
+        ]
+    }
+    with pytest.raises(pyhf.exceptions.Unsupported):
+        pyhf.pdf._ModelConfig(
+            spec, measurement_name=measurements, modifiers_settings=msettings
+        )
 
 
 def test_model_integration_fixed_parameters():

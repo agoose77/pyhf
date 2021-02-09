@@ -106,7 +106,7 @@ def test_minimize(tensorlib, precision, optimizer, do_grad, do_stitch):
 
         result = pyhf.infer.mle.fit(data, m, do_grad=do_grad, do_stitch=do_stitch)
 
-        rel_tol = 2e-06
+        rel_tol = 1e-08
         # Fluctuations beyond precision shouldn't matter
         abs_tol = 1e-6 if "32b" in identifier else 1e-8
 

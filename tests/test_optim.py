@@ -119,6 +119,8 @@ def test_minimize(tensorlib, precision, optimizer, do_grad, do_stitch):
                 rel_tol = 3e-2
             if "minuit-jax-32b" in identifier:
                 rel_tol = 4e-2
+        if "do_grad-scipy-jax-32b" in identifier:
+            rel_tol = 1e-5
 
         # check fitted parameters
         assert pytest.approx(
